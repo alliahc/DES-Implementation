@@ -124,27 +124,20 @@ char *ShiftLeft(char *key, int shifts){
 void RoundKeys(char *key){
     char key64to56[57]="";
     permute(56,key,parity_drop,key64to56);
-    //printf("key64to56:%s\n",key64to56);
-    char leftsubkey[29],rightsubkey[29]; //29 cause of null-terminator
+    char leftsubkey[29],rightsubkey[29]; //29 char including null-terminator
     leftsubkey[28]='\0';
     rightsubkey[28]='\0';
     memcpy(leftsubkey,&key64to56,28);
     memcpy(rightsubkey,&key64to56[28],28);
-    //printf("leftsubkey:%s\n",leftsubkey);
-    //printf("rightsubkey:%s\n",rightsubkey);
     for (int i=0; i < 16; i++){
         ShiftLeft(leftsubkey,shift_table[i]);
         ShiftLeft(rightsubkey,shift_table[i]);
-        //printf("leftsubkey at round %d:%s\n",i,leftsubkey);
-        //printf("rightsubkey at round %d:%s\n",i,rightsubkey);
         char combine[58]="";
         strcpy(combine,leftsubkey);
         strcat(combine,rightsubkey);
-        //printf("combine at round %d:%s\n",i,combine);
         char roundkey[49]="";
         permute(48,combine,key_comp,roundkey);
         strcpy(round_keys[i],roundkey);
-        //printf("roundkey at round %d:%s\n",i,round_keys[i]);
     }
 }
 
@@ -157,11 +150,9 @@ void *reverse(char *s){
     }
 }
 char *PlainToBin(char *plaintext, char *binary){
-    //char temp[351]="";
     char pad='0';
     for (int i = strlen(plaintext)-1; i>=0; i--) {
         int ascii = plaintext[i];
-        //printf("char: %c ascii:%d\n",plaintext[i],ascii);
         int new_ascii;
         char ch;
         int j=0;
@@ -184,13 +175,11 @@ char *PlainToBin(char *plaintext, char *binary){
             strncat(binary,&pad,1);
         }
     }
-    //binary=strcat(binary,temp);
     return binary;
 }
 char *XOR(char *block, char *key, char *out){
     char ch[3]="01";
     int length=strlen(block);
-    //printf("length of block:%d\n",length);
     for (int i=0; i < length;i++){
         if(block[i]==key[i]){
            strncat(out,&ch[0],1);
@@ -205,30 +194,23 @@ char *XOR(char *block, char *key, char *out){
 char *Encrypt(char *plainblock, char *encrypted){
     char temp[65]="";
     permute(64,plainblock,init_perm,temp);
-    //printf("initial permutation:%s\n",temp);
     char leftblock[33],rightblock[33];
     leftblock[32]='\0';
     rightblock[32]='\0';
     memcpy(leftblock,&temp,32);
     memcpy(rightblock,&temp[32],32);
-    //printf("L0:%s\n",leftblock);
-    //printf("R0:%s\n",rightblock);
     for (int i=0; i<16; i++){
         //mixer
         char right32to48[49]="";
         permute(48,rightblock,expansion_dbox,right32to48);
-        //printf("right32to48:%s\n",right32to48);
         char xor_right[49]="";
         XOR(right32to48,round_keys[i],xor_right);
-        //printf("XOR right:%s\n", xor_right);
         //substitute
-        char sub[33]=""; //32 lang ata instead na 48
+        char sub[33]="";
         for (int j=0; j<8; j++){
             int row = 2 * (xor_right[j * 6] - '0') + (xor_right[j * 6 + 5] - '0'); // -'0' to convert to int
             int col = (8 * (xor_right[j * 6 + 1] - '0')) + (4 * (xor_right[j * 6 + 2] - '0')) + (2 * (xor_right[j * 6 + 3] - '0')) + (xor_right[j * 6 + 4] - '0');
             int value = sbox[j][row][col];
-            //printf("j:%d, row:%d, col:%d\n",j,row,col);
-            //printf("value:%d\n",value);
             int temp=value/8;
             char t1=temp + '0';
             strncat(sub,&t1,1);
@@ -243,8 +225,6 @@ char *Encrypt(char *plainblock, char *encrypted){
             value=value%2;
             char t4=value + '0';
             strncat(sub,&t4,1);
-            //printf("t1 to t4:%c %c %c %c\n",t1,t2,t3,t4);
-            //printf("sub:%s\n",sub);
         }
 
         char straight[33]="";
@@ -252,20 +232,13 @@ char *Encrypt(char *plainblock, char *encrypted){
         char xor_left[33]="";
         XOR(leftblock,straight,xor_left);
         strcpy(leftblock,xor_left); 
-        //printf("sub:%s\n",sub);
-        //printf("straight:%s\n",straight);
-        //printf("xor_left:%s\n",xor_left);
         //swap
         if (i!=15){
             char temp[33]="";
             strcpy(temp,rightblock);
             strcpy(rightblock,leftblock);
             strcpy(leftblock,temp);
-            //printf("after swap leftblock:%s\n",leftblock);
-            //printf("after swap rightblock:%s\n",rightblock);
         }
-        //printf("leftblock:%s\t rightblock:%s\n",leftblock,rightblock);
-        //printf("roundkeys at round %d:%s\n\n",i+1,round_keys[i]);
     }
     //combine
     char combine[66]="";
@@ -280,16 +253,14 @@ int ParityCheck(char *key){
     int ones=0;
     for (int i=0; i<length; i++){
         if(i%7!=0 || i==0){
-            //printf("%c",key[i]);
             if(key[i]=='1'){
                 ones++;
             }
         }
         else{
-            //printf(" %c ",key[i]);
             if((ones%2==0 && key[i]=='0')){
                 printf("invalid key");
-                return 0; //may error
+                return 0; 
             }
             ones=0;
         }  
@@ -307,16 +278,13 @@ int main(){
     if(!is_valid) return 0;
     char converted[351]=""; //max of 50 chars * max 7 bits
     PlainToBin(plaintext,converted);
-    //printf("in binary: %s\n",converted);
     RoundKeys(key);
     char encrypted[351]="";
     for (int i=0; i<strlen(converted);i+=64){
         char plainblock[65]="";
         memcpy(plainblock,&converted[i],64);
-        //printf("plain block %d: %s\n",i,plainblock);
         char encryptedblock[65]="";
         Encrypt(plainblock,encryptedblock);
-        //printf("encrypted block:%s\n",encryptedblock);
         strcat(encrypted,encryptedblock);
     }
     printf("%s",encrypted);

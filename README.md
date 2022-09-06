@@ -1,6 +1,6 @@
 # DES-Implementation
 
-##About
+## About
 This program is a course requirement for the CS 153 (Introduction to Computer Security) course of the Department of Computer Science, College of Engineering, University of the Philippines, Diliman under Sir Philip C. Zuniga.
 
 Given a plaintext and a 64-bit key, this program will output the formed cipher text using DES. This program is based on https://academic.csuohio.edu/yuc/security/Chapter_06_Data_Encription_Standard.pdf. Additionally, the 64-bit key will go through a parity check. If the key fails the parity bit check, then the program will output `invalid key` instead of the cipher text.
